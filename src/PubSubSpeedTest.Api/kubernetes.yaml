@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pubsubspeedtest-api
+  labels:
+    app: pubsubspeedtest-api
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 5000
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: pubsubspeedtest-api
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: pubsubspeedtest-api
+  labels:
+    app: pubsubspeedtest-api
+spec:
+  selector:
+    matchLabels:
+      app: pubsubspeedtest-api
+  template:
+    metadata:
+      labels:
+        app: pubsubspeedtest-api
+    spec:
+      volumes:
+      - name: service-account-key
+        secret:
+          secretName: pubsubspeedtest-service-account-key
+      containers:
+      - name: pubsubspeedtest-api
+        image: markvincze/pubsubspeedtest-api:1
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: service-account-key
+          mountPath: /var/secrets/google
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /var/secrets/google/key.json
+        ports:
+        - name: http
+          containerPort: 5000
+

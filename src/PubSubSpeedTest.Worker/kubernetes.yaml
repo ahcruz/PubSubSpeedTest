@@ -1,0 +1,43 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: pubsubspeedtest-worker
+  labels:
+    app: pubsubspeedtest-worker
+spec:
+  selector:
+    matchLabels:
+      app: pubsubspeedtest-worker
+  template:
+    metadata:
+      labels:
+        app: pubsubspeedtest-worker
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - pubsubspeedtest-api
+            topologyKey: "kubernetes.io/hostname"
+      volumes:
+      - name: service-account-key
+        secret:
+          secretName: pubsubspeedtest-service-account-key
+      containers:
+      - name: pubsubspeedtest-worker
+        image: markvincze/pubsubspeedtest-worker:1
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: service-account-key
+          mountPath: /var/secrets/google
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /var/secrets/google/key.json
+        ports:
+        - name: http
+          containerPort: 5000
+
